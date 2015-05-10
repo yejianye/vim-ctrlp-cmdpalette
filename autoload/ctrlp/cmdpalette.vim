@@ -36,15 +36,23 @@ if !exists('g:ctrlp_cmdpalette_execute')
   let g:ctrlp_cmdpalette_execute = 0
 endif
 
+if !exists('g:ctrlp_cmdpalette_ignore_internal')
+  let g:ctrlp_cmdpalette_ignore_internal = 0
+endif
+
 python << endofpython
 import vim
 import json
 
 # obtain the internal commands (file distributed with the plugin)
-path_to_script = vim.eval('expand("<sfile>")')
-path_to_commands = path_to_script.replace('cmdpalette.vim', 'internal_commands.txt')
-with open(path_to_commands) as commands_file:
-    internal_commands = [l.strip() for l in commands_file.readlines()]
+ignore_internal = int(vim.eval('g:ctrlp_cmdpalette_ignore_internal'))
+if not ignore_internal:
+    path_to_script = vim.eval('expand("<sfile>")')
+    path_to_commands = path_to_script.replace('cmdpalette.vim', 'internal_commands.txt')
+    with open(path_to_commands) as commands_file:
+        internal_commands = [l.strip() for l in commands_file.readlines()]
+else:
+    internal_commands = []
 
 # obtain the custom commands
 vim.command('redir => custom_commands')
@@ -52,7 +60,7 @@ vim.command('silent command')
 vim.command('redir END')
 
 # convert to list, remove empties, discard 4 first columns and take first word
-custom_commands = [x[4:].split()[0] + '\t(custom command)'
+custom_commands = [x[4:].split()[0]
                    for x in vim.eval('custom_commands').split('\n')
                    if x.strip()]
 # remove header
@@ -76,7 +84,6 @@ endif
 function! ctrlp#cmdpalette#init()
   return s:cmdpalette_commands
 endfunction
-
 
 " This will be called by ctrlp when a match is selected by the user
 " Arguments:
